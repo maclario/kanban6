@@ -71,7 +71,7 @@ public class Main {
         System.out.println("Статус эпика " + epic6.getStatus());
 
         task1.setStatus(TaskStatus.NEW);
-        manager.getTask(1);
+        manager.getTask(2);
         manager.getTask(2);
         manager.getEpicTask(3);
         manager.getEpicTask(6);
