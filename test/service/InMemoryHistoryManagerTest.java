@@ -18,11 +18,13 @@ class InMemoryHistoryManagerTest {
     private static Task task1;
     private static EpicTask epic2;
     private static Subtask sub3;
+    private static Task task4;
     private static Task convertedEpic2;
     private static Task convertedSub3;
     private static int task1Id;
     private static int epic2Id;
     private static int sub3Id;
+    private static int task4Id;
 
     @BeforeAll
     public static void historyShouldBeEmptyIfNoTasksAdded() {
@@ -43,6 +45,10 @@ class InMemoryHistoryManagerTest {
         sub3 = new Subtask("Title s3", "Description s3", epic2Id);
         taskManager.createSubtask(sub3);
         sub3Id = taskManager.getId();
+        task4 = new Task("Title t4", "Description t4");
+        taskManager.createTask(task4);
+        task4Id = taskManager.getId();
+        taskManager.getTask(task4Id);
 
         convertedEpic2 = new Task(epic2.getTitle(), epic2.getDescription());
         convertedEpic2.setId(epic2Id);
@@ -50,18 +56,19 @@ class InMemoryHistoryManagerTest {
         convertedSub3.setId(sub3Id);
 
         taskManager.getTask(task1Id);
-        taskManager.getEpicTask(epic2Id);
         taskManager.getSubtask(sub3Id);
+        taskManager.getEpicTask(epic2Id);
+        taskManager.getTask(task4Id);
     }
 
     @Test
     public void shouldAddTasksToHistory() {
         List<Task> history = taskManager.getHistory();
 
-        assertEquals(3, history.size(), "Размер истории не совпадает.");
+        assertEquals(4, history.size(), "Размер истории не совпадает.");
         assertEquals(task1, history.get(0), "Задача не добавлена в историю.");
-        assertEquals(convertedEpic2, history.get(1), "Эпик не добавлена в историю.");
-        assertEquals(convertedSub3, history.get(2), "Подзадача не добавлена в историю.");
+        assertEquals(convertedSub3, history.get(1), "Подзадача не добавлена в историю.");
+        assertEquals(convertedEpic2, history.get(2), "Эпик не добавлен в историю.");
     }
 
     @Test
@@ -69,10 +76,11 @@ class InMemoryHistoryManagerTest {
         taskManager.getTask(task1Id);
         taskManager.getEpicTask(epic2Id);
         taskManager.getSubtask(sub3Id);
+        taskManager.getTask(task4Id);
 
         List<Task> history = taskManager.getHistory();
 
-        assertEquals(3, history.size(), "Размер истории увеличился.");
+        assertEquals(4, history.size(), "Размер истории увеличился.");
     }
 
     @Test
@@ -98,13 +106,13 @@ class InMemoryHistoryManagerTest {
         assertEquals("Description t1", history.get(0).getDescription(), "Description задачи изменился.");
         assertEquals(TaskStatus.NEW, history.get(0).getStatus(), "Status задачи изменился.");
 
-        assertEquals("Title e2", history.get(1).getTitle(), "Title эпика изменился.");
-        assertEquals("Description e2", history.get(1).getDescription(), "Description эпика изменился.");
-        assertEquals(TaskStatus.NEW, history.get(1).getStatus(), "Status эпика изменился.");
+        assertEquals("Title e2", history.get(2).getTitle(), "Title эпика изменился.");
+        assertEquals("Description e2", history.get(2).getDescription(), "Description эпика изменился.");
+        assertEquals(TaskStatus.NEW, history.get(2).getStatus(), "Status эпика изменился.");
 
-        assertEquals("Title s3", history.get(2).getTitle(), "Title подзадачи изменился.");
-        assertEquals("Description s3", history.get(2).getDescription(), "Description подзадачи изменился.");
-        assertEquals(TaskStatus.NEW, history.get(2).getStatus(), "Status подзадачи изменился.");
+        assertEquals("Title s3", history.get(1).getTitle(), "Title подзадачи изменился.");
+        assertEquals("Description s3", history.get(1).getDescription(), "Description подзадачи изменился.");
+        assertEquals(TaskStatus.NEW, history.get(1).getStatus(), "Status подзадачи изменился.");
     }
 
     @Test
@@ -112,9 +120,7 @@ class InMemoryHistoryManagerTest {
         taskManager.deleteTask(task1Id);
         List<Task> history = taskManager.getHistory();
 
-        assertEquals(2, history.size(), "Размер истории не уменьшился на единицу.");
-        assertEquals(convertedEpic2, history.get(0), "Эпик не сместился к голове списка.");
-        assertEquals(convertedSub3, history.get(1), "Подзадача не сметислась к голове списка.");
+        assertEquals(3, history.size(), "Размер истории не уменьшился на единицу.");
     }
 
     @Test
@@ -122,17 +128,45 @@ class InMemoryHistoryManagerTest {
         taskManager.deleteEpicTask(epic2Id);
         List<Task> history = taskManager.getHistory();
 
-        assertEquals(1, history.size(), "Из истории должны удалиться и эпик, и его подзадача.");
+        assertEquals(2, history.size(), "Из истории должны удалиться и эпик, и его подзадача.");
     }
 
     @Test
     public void shouldRemoveSubtaskFromHistoryById() {
-        System.out.println(taskManager.getHistory().size());
         taskManager.deleteSubtask(sub3Id);
-        System.out.println(taskManager.getHistory().size());
         List<Task> history = taskManager.getHistory();
 
-        assertEquals(2, history.size(), "Размер истории не уменьшился на единицу.");
+        assertEquals(3, history.size(), "Размер истории не уменьшился на единицу.");
+    }
+
+    @Test
+    public void shouldRemoveTaskFromStartHistory() {
+        taskManager.deleteTask(task1Id);
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(3, history.size(), "Размер истории не уменьшился на единицу.");
+        assertEquals(convertedSub3, history.get(0), "Первым элементом должна стать подзадача c id: 3.");
+        assertEquals(convertedEpic2, history.get(1), "Вторым элементом должен стать эпик с id: 2.");
+        assertEquals(task4, history.get(2), "Третьим и последним элементом должна стать задача с id: 4.");
+    }
+
+    @Test
+    public void shouldRemoveTaskFromMidOfHistory() {
+        taskManager.deleteSubtask(sub3Id);
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(3, history.size(), "Размер истории не уменьшился на единицу.");
+        assertEquals(convertedEpic2, history.get(1), "Вторым элементом должен стать эпик с id: 2.");
+        assertEquals(task4, history.get(2), "Третьим и последним элементом должна стать задача с id: 4.");
+    }
+
+    @Test
+    public void shouldRemoveTaskFromEndOfHistory() {
+        taskManager.deleteTask(task4Id);
+        List<Task> history = taskManager.getHistory();
+
+        assertEquals(3, history.size(), "Резмер истории не уменьшился на единицу.");
+        assertEquals(convertedEpic2, history.get(2), "Последним элементом истории должен стать эпик с id: 2");
     }
 
     @Test
@@ -143,7 +177,5 @@ class InMemoryHistoryManagerTest {
 
         assertTrue(history.isEmpty(), "История должна быть пустой.");
     }
-
-
 
 }
