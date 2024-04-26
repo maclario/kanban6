@@ -45,12 +45,11 @@ class InMemoryHistoryManagerTest {
 
     @Test
     public void historyShouldNotContainsDuplicates() {
-        historyManager.add(task1);
+        int originalHistorySize = historyManager.getHistory().size();
         historyManager.add(task2);
-        historyManager.add(task3);
         history = historyManager.getHistory();
 
-        assertEquals(3, history.size(), "Размер истории увеличился.");
+        assertEquals(originalHistorySize, history.size(), "Размер истории изменился.");
     }
 
     @Test
